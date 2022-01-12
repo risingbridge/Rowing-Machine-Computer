@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Device.Gpio;
+using System.Diagnostics;
 using System.Threading;
 
 Console.WriteLine("Bloinging. Press Ctrl+C to end!");
@@ -54,14 +55,20 @@ void HallEffectDetection(object sender, PinValueChangedEventArgs pinValueChanged
 
 async Task PrintHallStatus()
 {
+    Stopwatch sw = new Stopwatch();
+    sw.Start();
     while(printStatus)
     {
         if(pulseCount >= magnetsPrRev)
         {
+            long time = sw.ElapsedMilliseconds;
+            long rpm = (60000 / time);
+            sw.Restart();
             pulseCount = 0;
             revCount++;
+            Console.WriteLine($"RPM: {rpm}");
         }
-        Console.WriteLine($"Counted {revCount} revolutions");
+        //Console.WriteLine($"Counted {revCount} revolutions");
     }
     Console.WriteLine("Print taske at end");
 }
