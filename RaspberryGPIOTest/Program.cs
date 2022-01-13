@@ -1,19 +1,34 @@
-﻿using System;
+﻿using RaspberryGPIOTest;
+using System;
 using System.Device.Gpio;
 using System.Diagnostics;
 using System.Threading;
 
-Console.WriteLine("Bloinging. Press Ctrl+C to end!");
+Console.WriteLine("Revolution counter!");
 
-int hallEffectPin = 17;
+
+int hallEffectSensorAlpha = 17;
 using var controller = new GpioController();
 int magnetsPrRev = 1;
 int revCount = 0;
 int pulseCount = 0;
-bool BeamBroke = false;
 
-controller.OpenPin(hallEffectPin, PinMode.Input);
-controller.RegisterCallbackForPinValueChangedEvent(hallEffectPin, PinEventTypes.Falling, HallEffectDetection);
+if (File.Exists("./config.json"))
+{
+    string settingsJsonString = File.ReadAllText("./config.json");
+    Settings? settings = System.Text.Json.JsonSerializer.Deserialize<Settings>(settingsJsonString);
+    if(settings != null)
+    {
+        magnetsPrRev = settings.Magnets;
+        hallEffectSensorAlpha = settings.HallPinA;
+        Console.WriteLine($"Loaded settings:\n {settings.ToString()}");
+    }
+}
+
+//Set settings from settings file if exists
+
+controller.OpenPin(hallEffectSensorAlpha, PinMode.Input);
+controller.RegisterCallbackForPinValueChangedEvent(hallEffectSensorAlpha, PinEventTypes.Falling, HallEffectDetection);
 
 
 
@@ -40,7 +55,7 @@ while (keepApplicationRunning)
             break;
         case ConsoleKey.F9:
             Console.WriteLine("\n\nQuitting...\n\n");
-            controller.UnregisterCallbackForPinValueChangedEvent(hallEffectPin, HallEffectDetection);
+            controller.UnregisterCallbackForPinValueChangedEvent(hallEffectSensorAlpha, HallEffectDetection);
             keepApplicationRunning = false;
             break;
         default:
@@ -73,5 +88,5 @@ async Task PrintHallStatus()
     Console.WriteLine("Print taske at end");
 }
 
-controller.ClosePin(hallEffectPin);
-Console.WriteLine($"{hallEffectPin} closed. Quitting.");
+controller.ClosePin(hallEffectSensorAlpha);
+Console.WriteLine($"{hallEffectSensorAlpha} closed. Quitting.");
