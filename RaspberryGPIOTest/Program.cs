@@ -8,6 +8,19 @@ Console.WriteLine("Revolution counter!");
 
 
 int hallEffectSensorAlpha = 17;
+int hallEffectSensorBravo = 27;
+int hallEffectSensorCharlie = 22;
+
+bool hallAlphaTriggered = false;
+bool hallBravoTriggered = false;
+bool hallCharlieTriggered = false;
+string sensorString = string.Empty;
+DateTime timestampAlpha = DateTime.UtcNow;
+DateTime timestampBravo = DateTime.UtcNow;
+DateTime timestampCharlie = DateTime.UtcNow;
+
+bool turningClockwise = false;
+
 using var controller = new GpioController();
 int magnetsPrRev = 1;
 int revCount = 0;
@@ -17,18 +30,24 @@ if (File.Exists("./config.json"))
 {
     string settingsJsonString = File.ReadAllText("./config.json");
     Settings? settings = System.Text.Json.JsonSerializer.Deserialize<Settings>(settingsJsonString);
+    //Set settings from settings file if exists
     if(settings != null)
     {
         magnetsPrRev = settings.Magnets;
         hallEffectSensorAlpha = settings.HallPinA;
+        hallEffectSensorBravo = settings.HallPinB;
+        hallEffectSensorCharlie = settings.HallPinC;
         Console.WriteLine($"Loaded settings:\n {settings.ToString()}");
     }
 }
 
-//Set settings from settings file if exists
 
 controller.OpenPin(hallEffectSensorAlpha, PinMode.Input);
-controller.RegisterCallbackForPinValueChangedEvent(hallEffectSensorAlpha, PinEventTypes.Falling, HallEffectDetection);
+controller.OpenPin(hallEffectSensorBravo, PinMode.Input);
+controller.OpenPin(hallEffectSensorCharlie, PinMode.Input);
+controller.RegisterCallbackForPinValueChangedEvent(hallEffectSensorAlpha, PinEventTypes.Falling, HallEffectAlphaDetection);
+controller.RegisterCallbackForPinValueChangedEvent(hallEffectSensorBravo, PinEventTypes.Falling, HallEffectBravoDetection);
+controller.RegisterCallbackForPinValueChangedEvent(hallEffectSensorCharlie, PinEventTypes.Falling, HallEffectCharlieDetection);
 
 
 
@@ -55,7 +74,9 @@ while (keepApplicationRunning)
             break;
         case ConsoleKey.F9:
             Console.WriteLine("\n\nQuitting...\n\n");
-            controller.UnregisterCallbackForPinValueChangedEvent(hallEffectSensorAlpha, HallEffectDetection);
+            controller.UnregisterCallbackForPinValueChangedEvent(hallEffectSensorAlpha, HallEffectAlphaDetection);
+            controller.UnregisterCallbackForPinValueChangedEvent(hallEffectSensorBravo, HallEffectBravoDetection);
+            controller.UnregisterCallbackForPinValueChangedEvent(hallEffectSensorCharlie, HallEffectCharlieDetection);
             keepApplicationRunning = false;
             break;
         default:
@@ -63,9 +84,85 @@ while (keepApplicationRunning)
     }
 }
 
-void HallEffectDetection(object sender, PinValueChangedEventArgs pinValueChangedEventArgs)
+void HallEffectAlphaDetection(object sender, PinValueChangedEventArgs pinValueChangedEventArgs)
 {
+    if (!hallAlphaTriggered)
+    {
+        sensorString += "a";
+        timestampAlpha = DateTime.UtcNow;
+    }
+    hallAlphaTriggered = true;
+    Console.WriteLine("Alpha Detected");
+}
+
+void HallEffectBravoDetection(object sender, PinValueChangedEventArgs pinValueChangedEventArgs)
+{
+    //Clockwise
+    //A - B - C
+    //B - C - A
+    //C - A - B
+    //Anti
+    //C - B - A
+    //B - A - C
+    //A - C - B
+    if (!hallBravoTriggered)
+    {
+        sensorString += "b";
+        timestampBravo = DateTime.UtcNow;
+    }
+    Console.WriteLine("Bravo Detected");
+    hallBravoTriggered = true;
     pulseCount++;
+    sensorString = String.Empty;
+    TimeSpan spanAB = timestampAlpha - timestampBravo;
+    TimeSpan spanBC = timestampCharlie - timestampBravo;
+    Console.WriteLine($"AB: {spanAB.Ticks}\tBC: {spanBC.Ticks}");
+    if(spanAB.Ticks < 0)
+    {
+        spanAB *= -1;
+    }
+    if(spanBC.Ticks < 0)
+    {
+        spanBC *= -1;
+    }
+    if(spanAB < spanBC)
+    {
+        turningClockwise = true;
+        hallAlphaTriggered = false;
+        hallBravoTriggered = false;
+        hallCharlieTriggered = false;
+    }
+    else
+    {
+        turningClockwise = false;
+        hallAlphaTriggered = false;
+        hallBravoTriggered = false;
+        hallCharlieTriggered = false;
+    }
+    //if(sensorString == "abc" || sensorString == "bca" || sensorString == "cab" || sensorString == "ab")
+    //{
+    //    sensorString = string.Empty;
+    //    hallAlphaTriggered = false;
+    //    hallBravoTriggered = false;
+    //    hallCharlieTriggered = false;
+    //    turningClockwise = true;
+    //}
+    //else
+    //{
+    //    sensorString = string.Empty;
+    //    turningClockwise = false;
+    //}
+}
+
+void HallEffectCharlieDetection(object sender, PinValueChangedEventArgs pinValueChangedEventArgs)
+{
+    if (!hallCharlieTriggered)
+    {
+        sensorString += "c";
+        timestampCharlie = DateTime.UtcNow;
+    }
+    Console.WriteLine("Charlie Detected");
+    hallCharlieTriggered = true;
 }
 
 async Task PrintHallStatus()
@@ -81,7 +178,7 @@ async Task PrintHallStatus()
             sw.Restart();
             pulseCount = 0;
             revCount++;
-            Console.WriteLine($"RPM: {rpm}");
+            Console.WriteLine($"RPM: {rpm}, Clockwise: {turningClockwise}");
         }
         //Console.WriteLine($"Counted {revCount} revolutions");
     }

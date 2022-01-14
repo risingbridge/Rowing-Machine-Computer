@@ -1,4 +1,6 @@
 {
-  "Magnets": 2,
-  "HallPinA": 17
+  "Magnets": 1,
+  "HallPinA": 17,
+  "HallPinB": 27,
+  "HallPinC": 22
 }
