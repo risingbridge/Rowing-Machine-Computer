@@ -9,8 +9,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RaspberryGPIOTest", "Raspbe
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{963A3FE9-17D6-4DC4-BADF-F572569D4DA8}"
 	ProjectSection(SolutionItems) = preProject
+		PsudoCode_Stroke_Detection.txt = PsudoCode_Stroke_Detection.txt
 		README.md = README.md
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rower_Sensor", "Rower_Sensor\Rower_Sensor.csproj", "{956DC226-3DFB-4AB1-8DD2-0D10DB647C1B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -76,6 +79,30 @@ Global
 		{A6C99CFA-1445-4656-8B1F-1DE8525847F7}.Release|x64.Build.0 = Release|Any CPU
 		{A6C99CFA-1445-4656-8B1F-1DE8525847F7}.Release|x86.ActiveCfg = Release|Any CPU
 		{A6C99CFA-1445-4656-8B1F-1DE8525847F7}.Release|x86.Build.0 = Release|Any CPU
+		{956DC226-3DFB-4AB1-8DD2-0D10DB647C1B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{956DC226-3DFB-4AB1-8DD2-0D10DB647C1B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{956DC226-3DFB-4AB1-8DD2-0D10DB647C1B}.Debug|ARM.ActiveCfg = Debug|Any CPU
+		{956DC226-3DFB-4AB1-8DD2-0D10DB647C1B}.Debug|ARM.Build.0 = Debug|Any CPU
+		{956DC226-3DFB-4AB1-8DD2-0D10DB647C1B}.Debug|ARM32.ActiveCfg = Debug|Any CPU
+		{956DC226-3DFB-4AB1-8DD2-0D10DB647C1B}.Debug|ARM32.Build.0 = Debug|Any CPU
+		{956DC226-3DFB-4AB1-8DD2-0D10DB647C1B}.Debug|ARM64.ActiveCfg = Debug|Any CPU
+		{956DC226-3DFB-4AB1-8DD2-0D10DB647C1B}.Debug|ARM64.Build.0 = Debug|Any CPU
+		{956DC226-3DFB-4AB1-8DD2-0D10DB647C1B}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{956DC226-3DFB-4AB1-8DD2-0D10DB647C1B}.Debug|x64.Build.0 = Debug|Any CPU
+		{956DC226-3DFB-4AB1-8DD2-0D10DB647C1B}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{956DC226-3DFB-4AB1-8DD2-0D10DB647C1B}.Debug|x86.Build.0 = Debug|Any CPU
+		{956DC226-3DFB-4AB1-8DD2-0D10DB647C1B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{956DC226-3DFB-4AB1-8DD2-0D10DB647C1B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{956DC226-3DFB-4AB1-8DD2-0D10DB647C1B}.Release|ARM.ActiveCfg = Release|Any CPU
+		{956DC226-3DFB-4AB1-8DD2-0D10DB647C1B}.Release|ARM.Build.0 = Release|Any CPU
+		{956DC226-3DFB-4AB1-8DD2-0D10DB647C1B}.Release|ARM32.ActiveCfg = Release|Any CPU
+		{956DC226-3DFB-4AB1-8DD2-0D10DB647C1B}.Release|ARM32.Build.0 = Release|Any CPU
+		{956DC226-3DFB-4AB1-8DD2-0D10DB647C1B}.Release|ARM64.ActiveCfg = Release|Any CPU
+		{956DC226-3DFB-4AB1-8DD2-0D10DB647C1B}.Release|ARM64.Build.0 = Release|Any CPU
+		{956DC226-3DFB-4AB1-8DD2-0D10DB647C1B}.Release|x64.ActiveCfg = Release|Any CPU
+		{956DC226-3DFB-4AB1-8DD2-0D10DB647C1B}.Release|x64.Build.0 = Release|Any CPU
+		{956DC226-3DFB-4AB1-8DD2-0D10DB647C1B}.Release|x86.ActiveCfg = Release|Any CPU
+		{956DC226-3DFB-4AB1-8DD2-0D10DB647C1B}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

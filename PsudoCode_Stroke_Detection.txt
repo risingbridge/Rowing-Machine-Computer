@@ -1,0 +1,33 @@
+:START
+
+HVIS MASKIN er stille, STROKE = FALSE
+
+HVIS STROKE er FALSE og MASKIN starter bevegelse i rett rettning:
+	STROKE = TRUE
+	lagre STROKE-START
+
+HVIS STROKE er TRUE og MASKIN beveger seg i rett rettning:
+	tell runder
+	HVIS lang tid siden STROKE-START:
+		STROKE = COMPLETE
+
+HVIS STROKE er TRUE og MASKIN snur rettning:
+	STROKE = COMPLETE
+	lagre STROKE-END
+
+HVIS STROKE er COMPLETE:
+	regn ut DISTANSE
+	STROKE-tid = STROKE-END - STROKE-START
+	send STROKE-info til hub
+	STROKE = FALSE
+	tilbake til :START
+
+
+
+
+
+HVIS state = still:
+	hvis pulse & clockwise:
+		state = stroke
+
+hvis state = stroke

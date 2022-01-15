@@ -1,0 +1,8 @@
+{
+  "SensorAlpha": 17,
+  "SensorBravo": 27,
+  "SensorCharlie": 22,
+  "MagnetsPrRev": 1,
+  "MeterPrRev": 1.33,
+  "SleepTime": 10
+}
