@@ -1,17 +1,25 @@
 ﻿using Rower_Sensor;
+using RowerClassLibrary;
 using System.Device.Gpio;
 using System.Diagnostics;
 using System.Text.Json;
+using Microsoft.AspNetCore.SignalR.Client;
+
 Console.WriteLine("Starting.");
 
 //Load settings from settings.json
 Settings? loadedSettings = JsonSerializer.Deserialize<Settings>(File.ReadAllText("./settings.json"));
-Settings settings = new Settings(17,27,22,1,1.33f, 10); //PinA, PinB, PinC, MagnetsPrRev, DistPrRev, SleepTime
+Settings settings = new Settings(17,27,22,1,1.33f, 5f, 10, "http://localhost:5134/row"); //PinA, PinB, PinC, MagnetsPrRev, DistPrRev, MaxDistPrStroke, SleepTime
 if(loadedSettings != null)
 {
     settings = loadedSettings;
     Console.WriteLine(settings);
 }
+
+//Starting SignalR-connection to hub
+await using var connection = new HubConnectionBuilder().WithUrl(settings.SignalRHub).Build();
+await connection.StartAsync();
+Console.WriteLine($"Connected to SignalR-hub {settings.SignalRHub}");
 
 //Variables for direction and speed-detection
 bool hallAlphaTriggered = false;
@@ -41,9 +49,14 @@ bool keepSendingData = true;
 
 //Variables for time detection
 DateTime lastPulseTimestamp = DateTime.UtcNow;
+DateTime strokeStartTimestamp = DateTime.UtcNow;
+DateTime strokeEndTimestamp = DateTime.UtcNow;
 
 //Other variables
 MachineState state = MachineState.Still;
+float TotalDist = 0;
+int TotalStrokes = 0;
+int totalRevs = 0;
 
 //Sets up the catch for ctrl+c
 Console.CancelKeyPress += delegate {
@@ -59,25 +72,41 @@ while (keepApplicationRunning)
         if(pulseCount > 0 && turningClockwise)
         {
             state = MachineState.Stroke;
-            Console.WriteLine("Changing state to stroke");
+            strokeStartTimestamp = DateTime.UtcNow;
+            await connection.SendAsync("StartRowing", "Start");
+            //Console.WriteLine("Changing state to stroke");
         }
     }
     if(state == MachineState.Stroke)
     {
         if (!turningClockwise)
         {
-            Console.WriteLine($"Stroke complete - {pulseCount / settings.MagnetsPrRev} revolutions.");
+            //Console.WriteLine($"Stroke complete - {pulseCount / settings.MagnetsPrRev} revolutions.");
             int revs = pulseCount / settings.MagnetsPrRev;
+            strokeEndTimestamp = DateTime.UtcNow;
             pulseCount = 0;
             //Send stroke-info
             float strokeDist = settings.MeterPrRev * (revs);
+            if(strokeDist > settings.MaxDistPrStroke)
+            {
+                strokeDist = settings.MaxDistPrStroke;
+            }
+            TotalDist += strokeDist;
+            TotalStrokes++;
+            totalRevs += revs;
+            StrokePacket packet = new StrokePacket(revs, strokeDist, strokeStartTimestamp, strokeEndTimestamp);
+            Console.Clear();
             Console.WriteLine($"Stroke distance: {strokeDist}m / (Display {Math.Floor(strokeDist)}m)");
+            Console.WriteLine($"Total distance: {TotalDist}");
+            Console.WriteLine($"Total strokes: {TotalStrokes}");
+            Console.WriteLine($"Total revs: {totalRevs}");
+            await connection.SendAsync("ProcessStrokePacket", JsonSerializer.Serialize(packet));
             state = MachineState.StrokeComplete;
         }
     }
     if(state == MachineState.StrokeComplete)
     {
-        Console.WriteLine("Stroke complete, machine still");
+        //Console.WriteLine("Stroke complete, machine still");
         state = MachineState.Still;
     }
 
@@ -157,10 +186,18 @@ void ExitApplication()
     keepApplicationRunning = false;
     keepSendingData = false;
     Console.WriteLine("Cleaning up");
+    controller.UnregisterCallbackForPinValueChangedEvent(settings.SensorAlpha, HallEffectAlphaDetection);
+    controller.UnregisterCallbackForPinValueChangedEvent(settings.SensorBravo, HallEffectBravoDetection);
+    controller.UnregisterCallbackForPinValueChangedEvent(settings.SensorCharlie, HallEffectCharlieDetection);
+    Thread.Sleep(100);
     controller.ClosePin(settings.SensorAlpha);
     controller.ClosePin(settings.SensorBravo);
     controller.ClosePin(settings.SensorCharlie);
+    Thread.Sleep(100);
     controller.Dispose();
+    connection.DisposeAsync();
+    Console.WriteLine($"Disconnected from SignalR-hub {settings.SignalRHub}");
+    Thread.Sleep(100);
     Console.WriteLine("Quitting");
     Environment.Exit(0);
 }

@@ -3,6 +3,8 @@
   "SensorBravo": 27,
   "SensorCharlie": 22,
   "MagnetsPrRev": 1,
-  "MeterPrRev": 1.33,
-  "SleepTime": 10
+  "MeterPrRev": 1.39,
+  "MaxDistPrStroke": 10,
+  "SleepTime": 10,
+  "SignalRHub": "http://192.168.10.147:5142/row"
 }

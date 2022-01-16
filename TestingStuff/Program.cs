@@ -1,17 +1,6 @@
-﻿bool keepRunning = true;
+﻿DateTime now = DateTime.Now;
+DateTime next = now.AddMinutes(10);
 
-Console.CancelKeyPress += delegate {
-    ExitApplication();
-};
+TimeSpan duration = next - now;
 
-while (keepRunning)
-{
-    Console.WriteLine("Blablablabla");
-}
-
-void ExitApplication()
-{
-    keepRunning = false;
-    Console.WriteLine("Stopping");
-    Environment.Exit(0);
-}
+Console.WriteLine(duration.Minutes);
