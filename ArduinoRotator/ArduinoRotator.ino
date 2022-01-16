@@ -13,7 +13,7 @@ int setValue = 93;
 int strokeTime = 3;
 int recoveryTime = 7;
 int strokeSpeed = 80;
-int recoverySpeed = 93;
+int recoverySpeed = 94;
 int servoOffset = 3;
 
 int strokeCount = 0;

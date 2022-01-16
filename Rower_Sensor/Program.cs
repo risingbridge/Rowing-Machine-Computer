@@ -2,6 +2,7 @@
 using System.Device.Gpio;
 using System.Diagnostics;
 using System.Text.Json;
+Console.WriteLine("Starting.");
 
 //Load settings from settings.json
 Settings? loadedSettings = JsonSerializer.Deserialize<Settings>(File.ReadAllText("./settings.json"));
@@ -44,8 +45,13 @@ DateTime lastPulseTimestamp = DateTime.UtcNow;
 //Other variables
 MachineState state = MachineState.Still;
 
-//Main loop
+//Sets up the catch for ctrl+c
+Console.CancelKeyPress += delegate {
+    ExitApplication();
+};
 
+//Main loop
+Console.WriteLine("Ready.");
 while (keepApplicationRunning)
 {
     if(state == MachineState.Still)
@@ -53,27 +59,29 @@ while (keepApplicationRunning)
         if(pulseCount > 0 && turningClockwise)
         {
             state = MachineState.Stroke;
+            Console.WriteLine("Changing state to stroke");
         }
     }
     if(state == MachineState.Stroke)
     {
         if (!turningClockwise)
         {
+            Console.WriteLine($"Stroke complete - {pulseCount / settings.MagnetsPrRev} revolutions.");
+            int revs = pulseCount / settings.MagnetsPrRev;
+            pulseCount = 0;
+            //Send stroke-info
+            float strokeDist = settings.MeterPrRev * (revs);
+            Console.WriteLine($"Stroke distance: {strokeDist}m / (Display {Math.Floor(strokeDist)}m)");
             state = MachineState.StrokeComplete;
         }
     }
     if(state == MachineState.StrokeComplete)
     {
+        Console.WriteLine("Stroke complete, machine still");
         state = MachineState.Still;
-        float strokeDist = settings.MeterPrRev * (pulseCount / settings.MagnetsPrRev);
-        //Send stroke-info
     }
 
 }
-
-controller.ClosePin(settings.SensorAlpha);
-controller.ClosePin(settings.SensorBravo);
-controller.ClosePin(settings.SensorCharlie);
 
 
 //Functions
@@ -83,6 +91,7 @@ void HallEffectAlphaDetection(object sender, PinValueChangedEventArgs pinValueCh
 {
     if (!hallAlphaTriggered)
     {
+        //Console.WriteLine("Alpha triggered");
         timestampAlpha = DateTime.UtcNow;
         hallAlphaTriggered = true;
     }
@@ -92,8 +101,8 @@ void HallEffectBravoDetection(object sender, PinValueChangedEventArgs pinValueCh
 {
     if (!hallBravoTriggered)
     {
-        timestampAlpha = DateTime.UtcNow;
-        hallAlphaTriggered = true;
+        timestampBravo = DateTime.UtcNow;
+        hallBravoTriggered = true;
 
         TimeSpan spanAB = timestampAlpha - timestampBravo;
         TimeSpan spanBC = timestampCharlie - timestampBravo;
@@ -105,7 +114,11 @@ void HallEffectBravoDetection(object sender, PinValueChangedEventArgs pinValueCh
         {
             spanBC *= -1;
         }
-        if (spanAB < spanBC)
+        //Console.WriteLine($"Span AB: {spanAB.Ticks}\tSpanBC: {spanBC.Ticks}");
+        //Console.WriteLine($"Timestamp A: {timestampAlpha.Ticks}\n" +
+        //    $"Timestamp B: {timestampBravo.Ticks}\n" +
+        //    $"Timestamp C: {timestampCharlie.Ticks}");
+        if (spanAB > spanBC)
         {
             turningClockwise = true;
             hallAlphaTriggered = false;
@@ -119,17 +132,37 @@ void HallEffectBravoDetection(object sender, PinValueChangedEventArgs pinValueCh
             hallBravoTriggered = false;
             hallCharlieTriggered = false;
         }
-        pulseCount++;
+        if (turningClockwise)
+        {
+            pulseCount++;
+            //Console.WriteLine($"Pulse Count is now {pulseCount}");
+        }
     }
+    //Console.WriteLine($"Bravo triggered. Clockwise: {turningClockwise}");
 }
 
 void HallEffectCharlieDetection(object sender, PinValueChangedEventArgs pinValueChangedEventArgs)
 {
     if (!hallCharlieTriggered)
     {
-        timestampAlpha = DateTime.UtcNow;
-        hallAlphaTriggered = true;
+        //Console.WriteLine("Charlie triggered");
+        timestampCharlie = DateTime.UtcNow;
+        hallCharlieTriggered = true;
     }
+}
+
+//Function to exit application. Cleans up the gpio-pins
+void ExitApplication()
+{
+    keepApplicationRunning = false;
+    keepSendingData = false;
+    Console.WriteLine("Cleaning up");
+    controller.ClosePin(settings.SensorAlpha);
+    controller.ClosePin(settings.SensorBravo);
+    controller.ClosePin(settings.SensorCharlie);
+    controller.Dispose();
+    Console.WriteLine("Quitting");
+    Environment.Exit(0);
 }
 
 enum MachineState
