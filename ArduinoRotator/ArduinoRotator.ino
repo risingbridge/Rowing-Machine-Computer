@@ -10,6 +10,13 @@ Servo rotatorServo;
 
 int readValue = 0;
 int setValue = 93;
+int strokeTime = 3;
+int recoveryTime = 7;
+int strokeSpeed = 80;
+int recoverySpeed = 93;
+int servoOffset = 3;
+
+int strokeCount = 0;
 
 // the setup function runs once when you press reset or power the board
 void setup() {
@@ -23,23 +30,25 @@ void loop() {
 	if (Serial.available() > 0) {
 		int incomingValue = Serial.parseInt();
 		if (incomingValue == 0 || incomingValue == '1') {
-
+			strokeCount = 0;
 		}
 		else {
-			incomingValue = incomingValue + 3;
-			if (incomingValue != setValue) {
-				if (incomingValue < 0) {
-					incomingValue = 0;
-				}
-				if (incomingValue > 180) {
-					incomingValue = 180;
-				}
-				setValue = incomingValue;
-				Serial.println("Setting servo value to ");
-				Serial.println(setValue);
-				Serial.println();
-			}
+			strokeCount = incomingValue;
 		}
 	}
-	rotatorServo.write(setValue);
+	while (strokeCount > 0) {
+		DoStroke();
+		strokeCount--;
+	}
+}
+
+void DoStroke() {
+	rotatorServo.write(strokeSpeed + servoOffset);
+	delay(strokeTime * 1000);
+	rotatorServo.write(90 + servoOffset);
+	delay(50);
+	rotatorServo.write(recoverySpeed + servoOffset);
+	delay(recoveryTime * 1000);
+	rotatorServo.write(90 + servoOffset);
+	delay(50);
 }
