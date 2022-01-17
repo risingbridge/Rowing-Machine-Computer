@@ -20,6 +20,9 @@ namespace RowerSignalRHub
                 StrokePacket recievedPacket = JsonSerializer.Deserialize<StrokePacket>(message);
                 Console.WriteLine($"Recieved packet!");
                 Console.WriteLine($"Dist: {recievedPacket.Distance}");
+
+                //if i have more the 3 strokes, calculate split based on last 3-5
+                
             }
         }
 
