@@ -100,7 +100,7 @@ void PrintContent(string? message)
         messages.Add(message);
     }
     int messageCounter = 0;
-    for (int i = messages.Count - 1; i > 0; i--)
+    for (int i = messages.Count - 1; i >= 0; i--)
     {
         Console.WriteLine($"{messages[i]}");
         messageCounter++;

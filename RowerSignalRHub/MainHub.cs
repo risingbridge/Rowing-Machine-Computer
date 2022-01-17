@@ -14,15 +14,23 @@ namespace RowerSignalRHub
             {
                 return;
             }
-            Console.WriteLine($"Recieved: {message}");
+            //Console.WriteLine($"Recieved: {message}");
             if(message != String.Empty || message != null)
             {
                 StrokePacket recievedPacket = JsonSerializer.Deserialize<StrokePacket>(message);
-                Console.WriteLine($"Recieved packet!");
-                Console.WriteLine($"Dist: {recievedPacket.Distance}");
+                Console.WriteLine($"Dist: {recievedPacket.Distance}\n" +
+                    $"Revs: {recievedPacket.Revolutions}\n" +
+                    $"Start: {recievedPacket.StrokeStartTimestamp}\n" +
+                    $"Stop: {recievedPacket.StrokeEndTimestamp}");
+                TimeSpan strokeSpan = recievedPacket.StrokeEndTimestamp - recievedPacket.StrokeStartTimestamp;
+                Console.WriteLine($"Duration: {strokeSpan.ToString(@"mm\:ss\:fff")}");
+                TimeSpan split = (500 / recievedPacket.Distance) * strokeSpan;
+                Console.WriteLine($"Split: {((split < TimeSpan.Zero) ? "-" : "") + split.ToString(@"mm\:ss")}");
+                Console.WriteLine("-----------------------------------------------------");
 
                 //if i have more the 3 strokes, calculate split based on last 3-5
-                
+
+                await Clients.All.SendAsync("BroadcastPacket", $"StrokeStart: {recievedPacket.StrokeStartTimestamp}, StrokeEnd: {recievedPacket.StrokeEndTimestamp}");
             }
         }
 
