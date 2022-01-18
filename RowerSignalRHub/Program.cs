@@ -11,5 +11,4 @@ app.MapHub<MainHub>("/row");
 //{
 //    endpoints.MapHub<MainHub>("/chat");
 //});
-
 app.Run();

@@ -1,0 +1,69 @@
+body, html{
+    width:100%;
+    height:100%;
+    margin:0;
+    font-family: Verdana, "Lucida Sans Unicode", sans-serif;
+    background-color: #fff;
+    color:#fff;
+}
+
+.container {
+    height:100%;
+    width:100%;
+    display:grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    grid-template-rows: .3fr 1fr 1fr;
+    gap: 2px;
+}
+
+.menubar{
+    display: inline-grid;
+    grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr 1fr;
+    grid-column-start: 1;
+    grid-column-end:5;
+    gap:5px;
+    background-color: #000;
+}
+
+.menubar div{
+    font-size: 1.5em;
+    text-align: center;
+    margin-top: auto;
+    margin-bottom: auto;
+}
+
+.menubar input{
+    border:0px;
+    background-color:#212121;
+    padding-left:1em;
+    padding-right: 1em;
+    color: #fff;
+    font-size: 1.3em;
+}
+
+.menubar input:active{
+    background-color: #474747;
+}
+
+.gridBox{
+    display: inline-grid;
+    text-align: center;
+    background-color: #000;
+    grid-template-rows: 1fr 1fr;
+    font-size: 1em;
+}
+
+.gridBox span{
+    font-size: 2em;
+}
+
+.gridBox span.connection{
+    font-size: 1em;
+}
+
+.gridBox img{
+    height:50px;
+    padding-top:20px;
+    filter: invert(100);
+    
+}

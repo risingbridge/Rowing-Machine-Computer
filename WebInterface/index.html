@@ -19,14 +19,17 @@
         <input type="button" id="stopMessage" value="Pause/Stop" />
         <input type="button" id="resetMessage" value="Save and reset" />
         <ul id="discussion"></ul>
+        <img src="./icons/energy.png" /><br />
+        <span id="powerString"></span>
     </div>
+    <a href="https://www.flaticon.com/" title="Flaticon">Icons created by Freepik - Flaticon</a>
     <!--Script references. -->
     <!--Reference the SignalR library. -->
     <script type="text/javascript" src="lib/signalr.min.js"></script>
     <!--Add script to update the page and send messages.-->
     <script type="text/javascript">
         document.addEventListener('DOMContentLoaded', function () {
-
+            var isConnected = false;
             var messageInput = document.getElementById('message');
 
             // Set initial focus to message input box.
@@ -38,13 +41,14 @@
                                     skipNegotiation: true,
                                     transport: signalR.HttpTransportType.WebSockets
                                 }).build();
-
-            // Create a function that the hub can call to broadcast messages.
+            
+            // Create a function that the hub can call to broadcast packets.
             connection.on('BroadcastPacket', function (message) {
                 // Html encode display name and message.
                 var encodedMsg = message;
                 // Add the message to the page.
                 var liElement = document.createElement('li');
+                document.getElementById('powerString').innerHTML = encodedMsg;
                 liElement.innerHTML = encodedMsg;
                 document.getElementById('discussion').appendChild(liElement);
             });

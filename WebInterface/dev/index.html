@@ -1,0 +1,261 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Water Rower R22 II</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="menubar">
+            <div id="activeuser">
+                
+                Gjest
+            </div>
+            <input type="button" id="selectUser" value="Velg bruker" />
+            <input type="button" id="startMessage" value="Start" />
+            
+            <input type="button" id="stopMessage" value="Stopp" />
+            <input type="button" id="resetMessage" value="Lagre & Reset" />
+            <div id="clock">
+                <span id="currentTime">12:00</span>
+            </div>
+        </div>
+        <div class="gridBox"><div><img src="icons/time.png"></div><div><span id="totaltime">08:32</span><br />/total time</div></div>
+        <div class="gridBox"><div><img src="icons/timer.png"></div><div><span id="split">02:20</span><br />/split</div></div>
+        <div class="gridBox"><div><img src="icons/distance.png"></div><div><span id="totalDist">1832</span><br />/m</div></div>
+        <div class="gridBox"><div><img src="icons/paddle.png"></div><div><span id="spm">21</span><br />/min</div></div>
+        <div class="gridBox"><div><img src="icons/heart-attack.png"></div><div><span id="pulse">21</span><br />/bpm</div></div>
+        <div class="gridBox"><div><img src="icons/energy.png"></div><div><span id="watt">135</span><br />/watt</div></div>
+        <div class="gridBox"><div><img src="icons/calories.png"></div><div><span id="kcal">78</span><br />/kcal</div></div>
+        <div class="gridBox"><div><img src="icons/offline.png"></div><div><span><a href="./index.html">Status</a></span><br /><span class="connection" id="connection">Disconnected</span></div></div>
+    </div>
+    
+    <!--USER SELECT MODAL-->
+    <div id="userSelectModal" class="modal">
+
+        <!-- Modal content -->
+        <div class="modal-content">
+        <input type="button" id="SelectHaavard" value="Håvard" />
+        <input type="button" id="SelectJohanne" value="Johanne" />
+        <input type="button" id="SelectGuest" value="Gjest" />
+
+        </div>
+    
+    </div>
+
+    <!--Script references. -->
+    <!--Reference the SignalR library. -->
+    <script type="text/javascript" src="lib/signalr.min.js"></script>
+    <!--Add script to update the page and send/recieve info.-->
+    <script type="text/javascript">
+        const timer = document.getElementById('totaltime');
+
+        var hr = 0;
+        var min = 0;
+        var sec = 0;
+        var stoptime = true;
+
+        function startTimer() {
+        if (stoptime == true) {
+                stoptime = false;
+                timerCycle();
+            }
+        }
+        function stopTimer() {
+        if (stoptime == false) {
+            stoptime = true;
+        }
+        }
+
+        function timerCycle() {
+            if (stoptime == false) {
+            sec = parseInt(sec);
+            min = parseInt(min);
+            hr = parseInt(hr);
+
+            sec = sec + 1;
+
+            if (sec == 60) {
+            min = min + 1;
+            sec = 0;
+            }
+            if (min == 60) {
+            hr = hr + 1;
+            min = 0;
+            sec = 0;
+            }
+
+            if (sec < 10 || sec == 0) {
+            sec = '0' + sec;
+            }
+            if (min < 10 || min == 0) {
+            min = '0' + min;
+            }
+            if (hr < 10 || hr == 0) {
+            hr = '0' + hr;
+            }
+
+            timer.innerHTML = hr + ':' + min + ':' + sec;
+
+            setTimeout("timerCycle()", 1000);
+        }
+        }
+
+        function resetTimer() {
+            timer.innerHTML = "00:00:00";
+            stoptime = true;
+            hr = 0;
+            sec = 0;
+            min = 0;
+        }
+
+
+        function startTime() {
+            const today = new Date();
+            let h = today.getHours();
+            let m = today.getMinutes();
+            m = checkTime(m);
+            document.getElementById('currentTime').textContent =  h + ":" + m;
+            setTimeout(startTime, 1000);
+        }
+
+        function checkTime(i) {
+            if (i < 10) {i = "0" + i};  // add zero in front of numbers < 10
+            return i;
+        }
+        startTime();
+
+        function resetDisplay(){
+            resetTimer();
+            document.getElementById('totaltime').textContent = "00:00";
+            document.getElementById('totalDist').textContent = "0";
+            document.getElementById('totalDist').textContent = "0";
+            document.getElementById('spm').textContent = "0";
+            document.getElementById('split').textContent = "00:00";
+            document.getElementById('pulse').textContent = "0";
+            document.getElementById('watt').textContent = "0";
+            document.getElementById('kcal').textContent = "0";
+        }
+        resetDisplay();
+        var currentUser = "Gjest";
+
+        document.addEventListener('DOMContentLoaded', function () {
+
+            // Start the connection.
+            var connection = new signalR.HubConnectionBuilder()
+                                .withUrl("http://127.0.0.1:5001/row",{
+                                    skipNegotiation: true,
+                                    transport: signalR.HttpTransportType.WebSockets
+                                }).build();
+            
+            // Create a function that the hub can call to broadcast packets.
+            connection.on('BroadcastPacket', function (message) {
+                // Html encode display name and message.
+                var encodedMsg = message;
+                var displayPacket = JSON.parse(encodedMsg);
+                let totalDuration = displayPacket.ElapsedTime;
+                totalDuration = totalDuration.split(".")[0];
+
+                let splitTime = displayPacket.Split;
+                splitTime = splitTime.split(".")[0];
+                // document.getElementById('totaltime').textContent = totalDuration;
+                document.getElementById('totalDist').textContent = displayPacket.TotalDistance;
+                document.getElementById('spm').textContent = displayPacket.StrokePrMin;
+                document.getElementById('split').textContent = splitTime;
+                document.getElementById('pulse').textContent = displayPacket.Pulse;
+                document.getElementById('watt').textContent = displayPacket.Effect;
+                document.getElementById('kcal').textContent = displayPacket.Calories;
+
+                console.log(encodedMsg);
+                // Add the message to the page.
+            });
+            
+            // Transport fallback functionality is now built into start.
+            connection.start()
+                .then(function () {
+                    console.log('connection started');
+                    document.getElementById('connection').textContent = "Connected";
+                    isConnected = true;
+                    
+                    document.getElementById('startMessage').addEventListener('click', function(event){
+                        connection.invoke('StartRowing', 'start');
+                        startTimer();
+                        event.preventDefault();
+                    }),
+                    document.getElementById('stopMessage').addEventListener('click', function(event){
+                        connection.invoke('StopRowing', 'stop');
+                        stopTimer();
+                        event.preventDefault();
+                    }),
+                    document.getElementById('resetMessage').addEventListener('click', function(event){
+                        connection.invoke('ResetRowing', 'reset');
+                        resetDisplay();
+                        event.preventDefault();
+                    });
+                    //Event listeners for user selection
+                    document.getElementById('SelectJohanne').addEventListener('click', function(event){
+                        connection.invoke('SelectUser', 'Johanne');
+                        currentUser = "Johanne";
+                        UpdateUser(currentUser);
+                        event.preventDefault();
+                    });
+                    document.getElementById('SelectHaavard').addEventListener('click', function(event){
+                        connection.invoke('SelectUser', 'Håvard');
+                        currentUser = "Håvard";
+                        UpdateUser(currentUser);
+                        event.preventDefault();
+                    });
+                    document.getElementById('SelectGuest').addEventListener('click', function(event){
+                        connection.invoke('SelectUser', 'Gjest');
+                        currentUser = "Gjest";
+                        event.preventDefault();
+                        UpdateUser(currentUser);
+                    });
+
+                    // document.getElementById('SelectUser').addEventListener('click', function(event){
+                    //     var selectedUser = document.getElementById('SelectUser').textContent;
+                    //     Console.log(selectedUser);
+                    //     connection.invoke('UserSelect', 'reset');
+                    //     event.preventDefault();
+                    // });
+            })
+            .catch(error => {
+                console.error(error.message);
+                isConnecteed = false;
+                document.getElementById('connection').textContent = "Error";
+            });
+        });
+
+        //Script for updating user text
+        function UpdateUser(user){
+            resetDisplay();
+            currentUser = user;
+            document.getElementById('activeuser').textContent = currentUser;
+            modal.style.display = "none";
+        }
+
+        //Script for the modal
+        // Get the modal
+        var modal = document.getElementById("userSelectModal");
+
+        // Get the button that opens the modal
+        var btn = document.getElementById("selectUser");
+
+        // Get the <span> element that closes the modal
+        var span = document.getElementsByClassName("close")[0];
+
+        // When the user clicks on the button, open the modal
+        btn.onclick = function() {
+        modal.style.display = "block";
+        }
+
+        // When the user clicks anywhere outside of the modal, close it
+        window.onclick = function(event) {
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+        }
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,133 @@
+body, html{
+    width:100%;
+    height:100%;
+    margin:0;
+    font-family: Verdana, "Lucida Sans Unicode", sans-serif;
+    background-color: #fff;
+    color:#fff;
+    overflow: hidden;
+}
+
+.container {
+    height:100%;
+    width:100%;
+    display:grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    grid-template-rows: .3fr 1fr 1fr;
+    gap: 2px;
+}
+
+.menubar{
+    display: inline-grid;
+    grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr 1fr;
+    grid-column-start: 1;
+    grid-column-end:5;
+    gap:5px;
+    background-color: #000;
+}
+
+.menubar div{
+    font-size: 1.5em;
+    text-align: center;
+    margin-top: auto;
+    margin-bottom: auto;
+}
+
+.menubar input{
+    border:0px;
+    background-color:#212121;
+    padding-left:1em;
+    padding-right: 1em;
+    color: #fff;
+    font-size: 1.3em;
+}
+
+.menubar input:active{
+    background-color: #474747;
+}
+
+.gridBox{
+    display: inline-grid;
+    text-align: center;
+    background-color: #000;
+    grid-template-rows: 1fr 1fr;
+    font-size: 1em;
+}
+
+.gridBox span{
+    font-size: 2em;
+}
+
+.gridBox span.connection{
+    font-size: 1em;
+}
+
+.gridBox img{
+    height:50px;
+    padding-top:20px;
+    filter: invert(100);
+    
+}
+
+.gridBox a{
+    text-decoration: none;
+    color: white;
+}
+
+
+
+
+/* The Modal (background) */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+}
+
+/* Modal Content/Box */
+.modal-content {
+    background-color: #474747;
+    margin: 5% auto; /* 15% from the top and centered */
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%; /* Could be more or less, depending on screen size */
+}
+
+/* The Close Button */
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close:hover, .close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.modal input:nth-child(2){
+    margin-top:.5em;
+    margin-bottom: .5em;
+}
+
+.modal input{
+    width:100%;
+    font-size: 2em;
+    padding:.5em;
+    background-color: #676767;
+    border:1px solid #000;
+    color:#fff;
+}
+
+.modal input:active{
+    background-color: #878787;
+}

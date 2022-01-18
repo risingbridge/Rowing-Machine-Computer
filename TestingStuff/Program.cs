@@ -5,7 +5,7 @@ using RowerClassLibrary;
 bool keepRunning = true;
 bool connected = false;
 List<string> messages = new List<string>();
-string SignalRUrl = "http://192.168.10.147:5142/row";
+string SignalRUrl = "http://127.0.0.1:5142/row";
 
 await using var connection = new HubConnectionBuilder().WithUrl(SignalRUrl).Build();
 
