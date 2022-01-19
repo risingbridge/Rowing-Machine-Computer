@@ -21,13 +21,13 @@
             </div>
         </div>
         <div class="gridBox"><div><img src="icons/time.png"></div><div><span id="totaltime">08:32</span><br />/total time</div></div>
-        <div class="gridBox"><div><img src="icons/timer.png"></div><div><span id="split">02:20</span><br />/split</div></div>
-        <div class="gridBox"><div><img src="icons/distance.png"></div><div><span id="totalDist">1832</span><br />/m</div></div>
+        <div class="gridBox"><div><img src="icons/timer.png"></div><div><span id="split">02:20</span><br />/500m</div></div>
+        <div class="gridBox"><div><img src="icons/distance.png"></div><div><span id="totalDist">1832</span><br />/m total</div></div>
         <div class="gridBox"><div><img src="icons/paddle.png"></div><div><span id="spm">21</span><br />/min</div></div>
         <div class="gridBox"><div><img src="icons/heart-attack.png"></div><div><span id="pulse">21</span><br />/bpm</div></div>
         <div class="gridBox"><div><img src="icons/energy.png"></div><div><span id="watt">135</span><br />/watt</div></div>
         <div class="gridBox"><div><img src="icons/calories.png"></div><div><span id="kcal">78</span><br />/kcal</div></div>
-        <div class="gridBox"><div><img src="icons/offline.png"></div><div><span><a href="./index.html">Status</a></span><br /><span class="connection" id="connection">Disconnected</span></div></div>
+        <div class="gridBox"><div><img src="icons/online.png"></div><div><span><a href="./index.html">Status</a></span><br /><span class="connection" id="connection">Disconnected</span></div></div>
     </div>
     
     <!--USER SELECT MODAL-->
@@ -143,7 +143,7 @@
 
             // Start the connection.
             var connection = new signalR.HubConnectionBuilder()
-                                .withUrl("http://127.0.0.1:5001/row",{
+                                .withUrl("http://192.168.10.147:5142/row",{
                                     skipNegotiation: true,
                                     transport: signalR.HttpTransportType.WebSockets
                                 }).build();
@@ -158,16 +158,17 @@
 
                 let splitTime = displayPacket.Split;
                 splitTime = splitTime.split(".")[0];
-                // document.getElementById('totaltime').textContent = totalDuration;
+                // Add the message to the page.
                 document.getElementById('totalDist').textContent = displayPacket.TotalDistance;
                 document.getElementById('spm').textContent = displayPacket.StrokePrMin;
                 document.getElementById('split').textContent = splitTime;
                 document.getElementById('pulse').textContent = displayPacket.Pulse;
                 document.getElementById('watt').textContent = displayPacket.Effect;
                 document.getElementById('kcal').textContent = displayPacket.Calories;
-
+                if(stoptime == true){
+                    startTimer();
+                }
                 console.log(encodedMsg);
-                // Add the message to the page.
             });
             
             // Transport fallback functionality is now built into start.

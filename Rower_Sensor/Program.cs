@@ -64,6 +64,9 @@ Console.CancelKeyPress += delegate {
 };
 
 //Main loop
+Stopwatch sw = new Stopwatch();
+sw.Start();
+TimeSpan timeSinceStart = TimeSpan.FromSeconds(0);
 Console.WriteLine("Ready.");
 while (keepApplicationRunning)
 {
@@ -75,6 +78,7 @@ while (keepApplicationRunning)
             strokeStartTimestamp = DateTime.UtcNow;
             await connection.SendAsync("StartRowing", "Start");
             //Console.WriteLine("Changing state to stroke");
+            timeSinceStart = sw.Elapsed;
         }
     }
     if(state == MachineState.Stroke)
@@ -84,6 +88,7 @@ while (keepApplicationRunning)
             //Console.WriteLine($"Stroke complete - {pulseCount / settings.MagnetsPrRev} revolutions.");
             int revs = pulseCount / settings.MagnetsPrRev;
             strokeEndTimestamp = DateTime.UtcNow;
+            
             pulseCount = 0;
             //Send stroke-info
             float strokeDist = settings.MeterPrRev * (revs);
@@ -94,7 +99,7 @@ while (keepApplicationRunning)
             TotalDist += strokeDist;
             TotalStrokes++;
             totalRevs += revs;
-            StrokePacket packet = new StrokePacket(revs, strokeDist, strokeStartTimestamp, strokeEndTimestamp);
+            StrokePacket packet = new StrokePacket(revs, strokeDist, strokeStartTimestamp, strokeEndTimestamp, timeSinceStart);
             Console.Clear();
             Console.WriteLine($"Stroke distance: {strokeDist}m / (Display {Math.Floor(strokeDist)}m)");
             Console.WriteLine($"Total distance: {TotalDist}");

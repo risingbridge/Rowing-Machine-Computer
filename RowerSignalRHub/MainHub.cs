@@ -9,8 +9,12 @@ namespace RowerSignalRHub
     {
         public static bool IsRowing = false;
         public static List<StrokePacket> strokeList = new List<StrokePacket>();
+        public static List<WorkoutPacket> workoutList = new List<WorkoutPacket>();
         public static string ActiveUser = "Gjest";
         public static float TotalDistance = 0;
+        public static WorkoutLog log = new WorkoutLog();
+        public static DateTime startTime;
+        public static DateTime endTime;
         public async Task ProcessStrokePacket(string message)
         {
             if (!IsRowing)
@@ -26,46 +30,32 @@ namespace RowerSignalRHub
                 TimeSpan strokeSpan = recievedPacket.StrokeEndTimestamp - recievedPacket.StrokeStartTimestamp;
                 TimeSpan split = (500 / recievedPacket.Distance) * strokeSpan;
 
-                //if i have more the 5 strokes, calculate split based on last 5 and stroke pr minutes
                 TimeSpan averageSplit = split;
                 int strokePrMin = 0;
+                //if i have more the 5 strokes, calculate split based on last 5 and stroke pr minutes
                 if(strokeList.Count >= 5)
                 {
-                    DateTime lastStroke = strokeList.Last().StrokeStartTimestamp;
-                    DateTime firstStroke = strokeList[strokeList.Count - 5].StrokeStartTimestamp;
-                    float dist = 0;
-                    int distCount = 0;
-                    for (int i = strokeList.Count -1; i > 0; i--)
-                    {
-                        dist += strokeList[i].Distance;
-                        if(distCount >= 5)
-                        {
-                            break;
-                        }
-                    }
+                    TimeSpan lastStroke = strokeList.Last().TimeSinceStart;
+                    TimeSpan firstStroke = strokeList[strokeList.Count - 5].TimeSinceStart;
                     TimeSpan longStrokeSpan = lastStroke - firstStroke;
-                    averageSplit = ((longStrokeSpan / dist) * 500);
-                    split = averageSplit;
-                    //Calc strokes pr min over last 5
-                    if (longStrokeSpan.Seconds > 0)
-                    {
-                        strokePrMin = (int)((float)60 / (float)(longStrokeSpan.Seconds / 5));
-                    }
+                    Console.WriteLine(longStrokeSpan);
+                    double oneStroke = 4 / longStrokeSpan.TotalMilliseconds;
+                    strokePrMin = (int)Math.Floor(oneStroke * 60000);
                 }
-                TimeSpan elapsed = TimeSpan.FromSeconds(0);
-                if(strokeList.Count > 2)
-                {
-                    elapsed = strokeList.Last().StrokeEndTimestamp - strokeList.First().StrokeStartTimestamp;
-                }
+                TimeSpan elapsed = DateTime.UtcNow - startTime;
+                int effect = (int)(2.8 / Math.Pow((averageSplit.TotalSeconds / 500), 3));
 
                 DisplayPacket toDisplay = new DisplayPacket();
                 toDisplay.ElapsedTime = elapsed;
                 toDisplay.Split = split;
                 toDisplay.TotalDistance = (int)TotalDistance;
                 toDisplay.StrokePrMin = strokePrMin;
+                toDisplay.Effect = effect;
 
                 Console.WriteLine($"StrokeList Length: {strokeList.Count}");
                 Console.WriteLine($"Dist: {recievedPacket.Distance}\n" +
+                    $"TimeSinceStart: {recievedPacket.TimeSinceStart}\n" +
+                    $"SPM: {strokePrMin}\n" +
                     $"Revs: {recievedPacket.Revolutions}\n" +
                     $"Start: {recievedPacket.StrokeStartTimestamp}\n" +
                     $"Stop: {recievedPacket.StrokeEndTimestamp}");
@@ -74,6 +64,18 @@ namespace RowerSignalRHub
                 Console.WriteLine("-----------------------------------------------------");
 
                 await Clients.All.SendAsync("BroadcastPacket", $"{JsonSerializer.Serialize(toDisplay)}");
+                WorkoutPacket workoutPacket = new WorkoutPacket()
+                {
+                    Stroke = recievedPacket,
+                    TotalTime = DateTime.Now - startTime,
+                    TotalDistance = TotalDistance,
+                    StrokesPrMin = strokePrMin,
+                    Split = split,
+                    Pulse = 0,
+                    Effect = 0,
+                    Calories = 0
+                };
+                workoutList.Add(workoutPacket);
             }
         }
 
@@ -83,17 +85,37 @@ namespace RowerSignalRHub
             {
                 IsRowing = true;
                 Console.WriteLine($"Recieved start!");
+                log = new WorkoutLog();
+                log.User = ActiveUser;
+                startTime = DateTime.UtcNow;
+                log.StartTime = startTime;
             }
         }
 
         public async Task StopRowing(string message)
         {
             IsRowing = false;
+            endTime = DateTime.UtcNow;
+            log.EndTime = endTime;
         }
 
         public async Task ResetRowing(string message)
         {
+            if(IsRowing)
+            {
+                endTime = DateTime.UtcNow;
+                log.EndTime = endTime;
+            }
+            //Log workout
+            log.WorkoutList = new List<WorkoutPacket>(workoutList);
+            log.TotalDistance = TotalDistance;
+            string logFileName = $"./{ActiveUser}_{DateTime.Now.ToString("yyyyMMddHHmmss")}.json";
+            File.WriteAllText(logFileName, JsonSerializer.Serialize(log));
+            Console.WriteLine($"Log saved to {logFileName}");
+
+
             strokeList.Clear();
+            workoutList.Clear();
             TotalDistance = 0;
             IsRowing = false;
         }
@@ -102,6 +124,10 @@ namespace RowerSignalRHub
         {
             ActiveUser = message;
             Console.WriteLine($"Active user set to {message}");
+            strokeList.Clear();
+            workoutList.Clear();
+            TotalDistance = 0;
+            IsRowing = false;
         }
 
         public override Task OnConnectedAsync()

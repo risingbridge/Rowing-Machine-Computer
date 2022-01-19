@@ -1,13 +1,18 @@
-﻿using System.Text.Json;
+﻿using System.Diagnostics;
+using System.Text.Json;
 using Microsoft.AspNetCore.SignalR.Client;
 using RowerClassLibrary;
 
 bool keepRunning = true;
 bool connected = false;
 List<string> messages = new List<string>();
-string SignalRUrl = "http://127.0.0.1:5142/row";
+string SignalRUrl = "http://192.168.10.147:5142/row";
 
 await using var connection = new HubConnectionBuilder().WithUrl(SignalRUrl).Build();
+await connection.StartAsync();
+connected = true;
+bool started = false;
+Stopwatch sw = new Stopwatch();
 
 
 RefreshConsole(null);
@@ -20,16 +25,18 @@ while (keepRunning)
     switch (key.Key)
     {
         case ConsoleKey.F1:
-            if (!connected)
+            if (!started)
             {
-                await connection.StartAsync();
+                started = true;
                 await connection.SendAsync("StartRowing", "Start");
+                sw.Start();
+                await Task.Run(() => SendRandomStroke());
             }
             else
             {
-                await connection.DisposeAsync();
+                started = false;
+                await connection.SendAsync("StopRowing", "Stop");
             }
-            connected = !connected;
             RefreshConsole(null);
             break;
         case ConsoleKey.Spacebar:
@@ -48,22 +55,30 @@ while (keepRunning)
 
 async Task SendRandomStroke()
 {
-    Random rnd = new Random();
-    int revs = rnd.Next(3,5);
-    float dist = rnd.Next(3, 5) + (float)rnd.NextDouble();
-    DateTime startTime = DateTime.UtcNow;
-    DateTime endTime = startTime.AddSeconds((double)rnd.Next(4,7));
-    StrokePacket packet = new StrokePacket(revs, dist, startTime, endTime);
-    try
+    while (started)
     {
-        await connection.SendAsync("ProcessStrokePacket", JsonSerializer.Serialize(packet));
-    }catch (Exception ex)
-    {
-        Console.WriteLine(ex.Message);
-        Console.ReadKey();
+        await Task.Delay(2857);
+        if (!started)
+        {
+            break;
+        }
+        Random rnd = new Random();
+        int revs = rnd.Next(3,5);
+        float dist = rnd.Next(3, 5) + (float)rnd.NextDouble();
+        DateTime startTime = DateTime.UtcNow;
+        DateTime endTime = startTime.AddSeconds((double)rnd.Next(1,3));
+        StrokePacket packet = new StrokePacket(revs, dist, startTime, endTime, sw.Elapsed);
+        try
+        {
+            await connection.SendAsync("ProcessStrokePacket", JsonSerializer.Serialize(packet));
+        }catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            Console.ReadKey();
+        }
+        string printString = $"Revs: {revs}, Dist: {dist}, Start: {startTime}, End: {endTime}";
+        RefreshConsole(printString);
     }
-    string printString = $"Revs: {revs}, Dist: {dist}, Start: {startTime}, End: {endTime}";
-    RefreshConsole(printString);
 }
 
 
@@ -77,13 +92,13 @@ void RefreshConsole(string? message)
 void PrintMenu()
 {
     Console.WriteLine($"--------------------------------------------MENU--------------------------------------------");
-    if (connected)
+    if (started)
     {
-        Console.Write("Press F1 to disconnect\t");
+        Console.Write("Press F1 to stop\t");
     }
     else
     {
-        Console.Write("Press F1 to connect\t");
+        Console.Write("Press F1 to start\t");
     }
     Console.Write("Press spacebar to send stroke\t");
     Console.Write("Press ESC to quit\t");
